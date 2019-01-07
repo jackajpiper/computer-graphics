@@ -14,6 +14,14 @@
 // ----------------------------------------------------------
 // Includes
 // ----------------------------------------------------------
+
+#include <iostream>
+
+#include <stdlib.h>
+#include <stddef.h>
+
+
+
 #include <stdio.h>
 #include <stdarg.h>
 #include <math.h>
@@ -35,6 +43,16 @@ void specialKeys();
 // ----------------------------------------------------------
 double rotate_y=0;
 double rotate_x=0;
+int lookAcross=0;
+double eyeUp=0;
+double eyeAcross=0;
+double viewUp=0;
+double viewAcross=0;
+int depth=0;
+int zoom_amount=0;
+
+double mouseX;
+double mouseY;
 
 void cuboid(float x, float y, float z) {
   //Multi-colored side - FRONT
@@ -91,6 +109,21 @@ void cuboid(float x, float y, float z) {
   glEnd();
 }
 
+void Draw_Grid() {
+
+	for(float i = -500; i <= 500; i += 0.2)
+	{
+		glBegin(GL_LINES);
+			glColor3ub(150, 190, 150);
+			glVertex3f(-500, 0, i);
+			glVertex3f(500, 0, i);
+
+			glVertex3f(i, 0, -500);
+			glVertex3f(i, 0, 500);
+		glEnd();
+	}
+}
+
 // ----------------------------------------------------------
 // display() Callback function
 // ----------------------------------------------------------
@@ -100,9 +133,15 @@ void display(){
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
   // Reset transformations
+	glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-  // gluLookAt(0, 0, 1, // eye position
-	// 		  0, 0, 0, // reference point
+  gluLookAt(0+eyeAcross, 1+eyeUp, 1, // eye position
+			  0+viewAcross, 0+viewUp, 0, // reference point
+			  0, 1, 0  // up vector
+		);
+
+  // gluLookAt(0+(0.01*width), 1+(0.01*height), 1+(0.01*depth), // eye position
+	// 		  0+(0.01*width), 0.2+(0.01*height), 0, // reference point
 	// 		  0, 1, 0  // up vector
 	// 	);
 
@@ -110,21 +149,28 @@ void display(){
   // glTranslatef( 0.1, 0.0, 0.0 );      // Not included
   // glRotatef( 180, 0.0, 1.0, 0.0 );    // Not included
 
-  // Rotate when user changes rotate_x and rotate_y
-  glRotatef( rotate_x, 1.0, 0.0, 0.0 );
-  glRotatef( rotate_y, 0.0, 1.0, 0.0 );
+  Draw_Grid();
+  cuboid(2.5,0.5,0.1);
 
   // Other Transformations
   // glScalef( 2.0, 2.0, 0.0 );          // Not included
 
-  cuboid(0.5,0.5,0.5);
 
-  // draw the arm parts and articulate them
   // glPushMatrix();
   //
-  //   // place the shoulder at origin (this is the default)
-  //   glTranslatef(1.0f, 0.0f, 0.0f);
-  //   cuboid(0.5,0.5,1);
+  //   glScalef( 1.0+(0.01*zoom_amount), 1.0+(0.01*zoom_amount), 1.0+(0.01*zoom_amount) );
+  //   // Rotate when user changes rotate_x and rotate_y
+  //   // glRotatef( rotate_x, 1.0, 0.0, 0.0 );
+  //   // glRotatef( rotate_y, 0.0, 1.0, 0.0 );
+  //   cuboid(2.5,0.5,0.1);
+  //
+  //   glPushMatrix();
+  //     // place the shoulder at origin (this is the default)
+  //     glTranslatef(0.0f, 0.0f, 0.5f);
+  //     cuboid(2.5,0.5,0.1);
+  //   glPopMatrix();
+  //
+  //   Draw_Grid();
   //
   // glPopMatrix();
 
@@ -138,65 +184,78 @@ void display(){
 // ----------------------------------------------------------
 void specialKeys( int key, int x, int y ) {
 
-  //  Right arrow - increase rotation by 5 degree
-  if (key == GLUT_KEY_RIGHT)
-    rotate_y += 5;
+  switch (key) {
 
-  //  Left arrow - decrease rotation by 5 degree
-  else if (key == GLUT_KEY_LEFT)
-    rotate_y -= 5;
+    case GLUT_KEY_RIGHT: viewAcross += 0.05;break;
 
-  else if (key == GLUT_KEY_UP)
-    rotate_x += 5;
+    case GLUT_KEY_LEFT: viewAcross -= 0.05;break;
 
-  else if (key == GLUT_KEY_DOWN)
-    rotate_x -= 5;
+    case GLUT_KEY_UP: viewUp += 0.05;break;
+
+    case GLUT_KEY_DOWN: viewUp -= 0.05;break;
+
+    // case WM_MOUSEMOVE:
+  	// 		// save old mouse coordinates
+  	// 		double oldMouseX = mouseX;
+  	// 		double oldMouseY = mouseY;
+    //
+  	// 		// get mouse coordinates from Windows
+  	// 		mouseX = LOWORD(lParam);
+  	// 		mouseY = HIWORD(lParam);
+    //
+  	// 		// these lines limit the camera's range
+  	// 		if (mouseY < 60)
+  	// 			mouseY = 60;
+  	// 		if (mouseY > 450)
+  	// 			mouseY = 450;
+    //
+  	// 		if ((mouseX - oldMouseX) > 0)		// mouse moved to the right
+  	// 			angle += 3.0f;
+  	// 		else if ((mouseX - oldMouseX) < 0)	// mouse moved to the left
+  	// 			angle -= 3.0f;
+    //
+  	// 		return 0;
+  	// 		break;
+  }
+
+
+  std::cerr << "\t viewUp  = " << viewUp << std::endl;
+  std::cerr << "\t viewAcross  = " << viewAcross << std::endl;
 
   //  Request display update
   glutPostRedisplay();
 
 }
 
-// void reshape(int w, int h)
-// {
-// 	glViewport(0, 0, w, h);
-// 	glMatrixMode(GL_PROJECTION);
-// 	glLoadIdentity();
-// 	// for perspective projection use the GLU helper
-// 	// take FOV, ASPECT RATIO, NEAR, FAR
-// 	gluPerspective(40.0, 1.0f, 1.0, 5.0);
-// }
+void reshape(int w, int h)
+{
+	glViewport(0, 0, w, h);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	// for perspective projection use the GLU helper
+	// take FOV, ASPECT RATIO, NEAR, FAR
+	gluPerspective(90.0, 1.0f, 0.1f,100.0f);
+}
 
-// void init_lights(const GLenum shade_model=GL_FLAT)
-// {
-// 	float light_position[] = {1.0, 1.0, 1.0, 0.0};
-// 	float light_ambient[] = {0.1, 0.1, 0.1, 1.0};
-//
-// 	glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
-// 	glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-//
-//     glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, 0);
-//
-// 	glFrontFace(GL_CW);
-// 	glEnable(GL_LIGHTING);
-// 	glEnable(GL_LIGHT0);
-//
-//     glEnable(GL_AUTO_NORMAL);
-//     glEnable(GL_NORMALIZE);
-// 	glEnable(GL_DEPTH_TEST);
-//
-//
-// 	glShadeModel(shade_model); // GL_FLAT, GL_SMOOTH
-//
-// 	//glEnable(GL_CULL_FACE);
-// 	//glCullFace(GL_BACK);
-// }
-
-// void init()
-// {
-// 	init_lights();
-// }
-
+void keyboard(unsigned char key, int, int)
+{
+	switch (key)
+	{
+		case 'q': exit(1); break;
+		case 'w': eyeUp -= 0.02; break;
+		case 's': eyeUp += 0.02; break;
+		case 'd': eyeAcross -= 0.02; break;
+		case 'a': eyeAcross += 0.02; break;
+		case 'z': zoom_amount -= 2; break;
+		case 'x': zoom_amount += 2; break;
+		case '1': depth -= 1; break;
+		case '2': depth += 1; break;
+	}
+  std::cerr << "\t eyeUp  = " << eyeUp << std::endl;
+  std::cerr << "\t eyeAcross  = " << eyeAcross << std::endl;
+  std::cerr << "\t lookAcross  = " << lookAcross << std::endl;
+	glutPostRedisplay();
+}
 
 // ----------------------------------------------------------
 // main() function
@@ -212,16 +271,20 @@ int main(int argc, char* argv[]){
 	glutInitWindowSize(512, 512);
 	glutInitWindowPosition(50, 50);
 
-  glDepthRange(0,5);
+  // glDepthRange(0,1);
   // Create window
   glutCreateWindow("Awesome Cube");
 
-  //  Enable Z-buffer depth test
+  //  Enaaaaaable Z-buffer depth test
   glEnable(GL_DEPTH_TEST);
+
+
+  gluPerspective(40.0, 1.0f, 0.1f,1.0f);
 
   // Callback functions
   glutSpecialFunc(specialKeys);
-	// glutReshapeFunc(reshape);
+  glutKeyboardFunc(keyboard);
+	glutReshapeFunc(reshape);
   glutDisplayFunc(display);
 
   // init();
